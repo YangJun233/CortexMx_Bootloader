@@ -544,6 +544,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\src\adapter\storage_adapter.c</FilePath>
             </File>
+            <File>
+              <FileName>protocol_adapter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\src\adapter\protocol_adapter.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

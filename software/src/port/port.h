@@ -4,6 +4,7 @@
 #include "com_adapter.h"
 #include "storage_adapter.h"
 
-extern COM_ADAPTER_STR com_adapter;
+extern com_adapter_str com_adapter;
+extern storage_adapter_str storage_adapter;
 
 #endif
