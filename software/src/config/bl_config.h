@@ -2,15 +2,16 @@
 #define CONFIG_H
 
 /**
- * @brief enable fw header area,if enable,bootloader 
- */
-#define CONFIG_FW_HEADER_ENABLE             1
-
-/**
  * @brief enable backup area,if enable,the firmware first receives the backup area,than copy to the execution area.
  *        if disable,the firmware is written directly to the execution area.
  */
 #define CONFIG_FW_BACKUP_AREA_ENABLE        1
+
+/**
+ * @brief enable fw header area,if enable,bootloader 
+ */
+#define CONFIG_FW_HEADER_ENABLE             0
+
 
 /**
  * @brief enable fw verify.if enable,bootloader will verify execution area firmware.

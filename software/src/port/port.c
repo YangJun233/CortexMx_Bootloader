@@ -17,3 +17,7 @@ storage_adapter_str storage_adapter =
 mcu_adapter_str mcu_adapter = 
 {
 };
+
+protocol_adapter_str protocol_adapter = 
+{
+};
