@@ -7,9 +7,14 @@
   * @param  size: read size.
   * @retval 0:ok, other: fail.
   */
-int storage_read_8bit_data(storage_adapter_str * adapter, uint32_t addr, uint8_t * p, uint32_t size)
+int storage_read_8bit_data(storage_adapter_str * p_adapter, uint32_t addr, uint8_t * p, uint32_t size)
 {
-    return adapter->p_read_8bit_data(addr, p, size);
+    if(!p_adapter)
+    {
+        return -1;
+    }
+    
+    return p_adapter->p_read_8bit_data(addr, p, size);
 }
 
 /**
@@ -19,9 +24,14 @@ int storage_read_8bit_data(storage_adapter_str * adapter, uint32_t addr, uint8_t
   * @param  size: read size.
   * @retval 0:ok, other: fail.
   */
-int storage_write_8bit_data(storage_adapter_str * adapter, uint32_t addr, uint8_t * p, uint32_t size)
+int storage_write_8bit_data(storage_adapter_str * p_adapter, uint32_t addr, uint8_t * p, uint32_t size)
 {
-    return adapter->p_write_8bit_data(addr, p, size);
+    if(!p_adapter)
+    {
+        return -1;
+    }
+    
+    return p_adapter->p_write_8bit_data(addr, p, size);
 }
 
 /**
@@ -31,7 +41,12 @@ int storage_write_8bit_data(storage_adapter_str * adapter, uint32_t addr, uint8_
   * @param  size: read size.
   * @retval 0:ok, other: fail.
   */
-int storage_earse_8bit_data(storage_adapter_str * adapter, uint32_t addr, uint8_t * p, uint32_t size)
+int storage_earse_data(storage_adapter_str * p_adapter, uint32_t addr, uint32_t size)
 {
-    return adapter->p_earse_8bit_data(addr, p, size);
+    if(!p_adapter)
+    {
+        return -1;
+    }
+    
+    return p_adapter->p_earse_data(addr, size);
 }

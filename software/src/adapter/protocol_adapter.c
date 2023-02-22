@@ -8,9 +8,14 @@
   * @param  size_out: output data size.
   * @retval 0:ok, other: fail
   */
-int protocol_fw_packet_analysis(protocol_adapter_str * adapter, uint8_t * p_in, uint32_t size_in, uint8_t * p_out, uint32_t size_out)
+int protocol_fw_packet_analysis(protocol_adapter_str * p_adapter, uint8_t * p_in, uint32_t size_in, uint8_t * p_out, uint32_t size_out)
 {
-    return adapter->p_fw_packet_analysis(p_in, size_in, p_out, size_out);
+    if(!p_adapter)
+    {
+        return -1;
+    }
+    
+    return p_adapter->p_fw_packet_analysis(p_in, size_in, p_out, size_out);
 }
 
 
@@ -23,9 +28,14 @@ int protocol_fw_packet_analysis(protocol_adapter_str * adapter, uint8_t * p_in, 
   * @param  size_out: output data size.
   * @retval 0:ok, other: fail
   */
-int protocol_cmd_packet_analysis(protocol_adapter_str * adapter, uint8_t * p_in, uint32_t size_in, 
+int protocol_cmd_packet_analysis(protocol_adapter_str * p_adapter, uint8_t * p_in, uint32_t size_in, 
                                  uint8_t * cmd, uint8_t * p_out, uint32_t size_out)
 {
-    return adapter->p_cmd_packet_analysis(p_in, size_in, cmd, p_out, size_out);
+    if(!p_adapter)
+    {
+        return -1;
+    }
+    
+    return p_adapter->p_cmd_packet_analysis(p_in, size_in, cmd, p_out, size_out);
 }
 

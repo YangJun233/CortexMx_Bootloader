@@ -2,6 +2,7 @@
 #include "port.h"
 #include "storage_adapter.h"
 #include "com_adapter.h"
+#include "mcu_adapter.h"
 #include "bl_config.h"
 
 #define BL_ENTER_APP    0xA5A5A5A5
@@ -9,22 +10,145 @@
 #define BL_COPYING      0xC3C3C3C3
 
 
-int bl_init(void)
+int bl_get_state(uint8_t * p_state)
 {
+    int ret =  storage_read_8bit_data(&storage_adapter, ADDR_BL_AREA_DATA, p_state, 4);
     
+    return ret;
 }
 
-uint32_t bl_get_state(void)
+int bl_set_state(uint32_t state)
 {
-    uint32_t bl_state = 0;
+    uint32_t bl_state = state;
     
-    storage_read_8bit_data(&storage_adapter, 0x01, (uint8_t *)bl_state, 4);
+    int ret = storage_write_8bit_data(&storage_adapter, ADDR_BL_AREA_DATA, (uint8_t *)bl_state, 4);
     
-    return bl_state;
+    return ret;
 }
+
+
+
+int bl_init_check(void)
+{
+    uint32_t bl_state = -1;
+    int ret = -1;
+    
+    ret = bl_get_state((uint8_t *)bl_state);
+    if(ret != 0)
+    {
+        return ret;
+    }
+    
+    if(bl_state == BL_ENTER_APP)
+    {
+#if (CONFIG_FW_VERIFY_ENABLE == 1)
+        //todo:verify fw
+        
+#endif
+        //jump to exe area
+        mcu_do_boot(&mcu_adapter, (void *)ADDR_EXE_AREA_FW);
+    }
+    else if(bl_state == BL_UPDATING)
+    {
+        ret = 1;
+    }
+#if (CONFIG_FW_BACKUP_AREA_ENABLE == 1)
+    else if(bl_state == BL_COPYING)
+    {
+        ret = bl_copy_firmware();
+        if(ret == 0)
+        {
+            //reset mcu
+            mcu_reset(&mcu_adapter);
+        }
+    }
+#endif
+    
+    return ret;
+}
+
+
+
+#if (CONFIG_FW_BACKUP_AREA_ENABLE == 1)
+/**
+  * @brief  copy fw and update boot state.
+  * @param  
+  * @retval 0:copy ok, other:copy fail.
+  */
+int bl_copy_firmware(void)
+{
+    int ret = -1;
+    
+    uint8_t buffer[STORAGE_PAGE_SIZE];
+    
+#if (FW_HEADER_ENABLE == 1)
+    uint32_t addr_copy_form = ADDR_BACKUP_AREA_HEADER;
+    uint32_t addr_copy_to = ADDR_EXE_AREA_HEADER;
+    
+    uint32_t copy_size = ADDR_EXE_AREA_HEADER_SIZE + ADDR_EXE_AREA_FW_SIZE;
+#else
+    uint32_t addr_copy_form = ADDR_BACKUP_AREA_FW;
+    uint32_t addr_copy_to = ADDR_EXE_AREA_FW;
+    
+    uint32_t copy_size = ADDR_EXE_AREA_FW_SIZE;
+#endif
+    
+    uint32_t page_num = (copy_size + STORAGE_PAGE_SIZE - 1) / STORAGE_PAGE_SIZE;
+    
+    while(page_num)
+    {
+        //earse
+        ret = storage_earse_data(&storage_adapter, addr_copy_to, STORAGE_PAGE_SIZE);
+        if(ret != 0)
+        {
+            goto exit;
+        }
+        
+        //read
+        ret = storage_read_8bit_data(&storage_adapter, addr_copy_form, buffer, STORAGE_PAGE_SIZE);
+        if(ret != 0)
+        {
+            goto exit;
+        }
+        
+        //write
+        ret = storage_write_8bit_data(&storage_adapter, addr_copy_to, buffer, STORAGE_PAGE_SIZE);
+        if(ret != 0)
+        {
+            goto exit;
+        }
+        
+        page_num--;
+        addr_copy_to += STORAGE_PAGE_SIZE;
+        addr_copy_form += STORAGE_PAGE_SIZE;
+    }
+    
+    //The program runs here,copy is completed,than verify fw and set boot state
+#if (CONFIG_FW_VERIFY_ENABLE == 1)
+    //todo:verify fw
+    ret = fw_verify();
+    if(ret != 0)   //verify fail
+    {
+        goto exit;
+    }
+#endif
+    
+    ret = bl_set_state(BL_ENTER_APP);
+    if(ret != 0)
+    {
+        goto exit;
+    }
+    
+exit:
+    
+    return ret;
+}
+#endif
+
 
 
 int bl_update_firmware(void)
 {
     
 }
+

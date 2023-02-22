@@ -12,3 +12,8 @@ storage_adapter_str storage_adapter =
 //    .p_read_8bit_data = ,
 //    .p_write_8bit_data = ,
 };
+
+
+mcu_adapter_str mcu_adapter = 
+{
+};
