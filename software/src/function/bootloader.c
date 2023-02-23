@@ -5,10 +5,11 @@
 #include "mcu_adapter.h"
 #include "bl_config.h"
 
+#include <stdio.h>
+
 #define BL_ENTER_APP    0xA5A5A5A5
 #define BL_UPDATING     0x69696969
 #define BL_COPYING      0xC3C3C3C3
-
 
 int bl_get_state(uint8_t * p_state)
 {
@@ -150,6 +151,20 @@ exit:
 #endif
 
 
+void fw_packet_ack(bool ack)
+{
+    uint8_t buffer[protocol_adapter.ack_packet_max_size];
+    uint32_t size;
+    
+    protocol_build_ack_packet(&protocol_adapter, ack, buffer, &size);
+    
+    if(size > 0)
+    {
+        com_write_data(&com_adapter, buffer, size);
+    }
+}
+
+
 
 int bl_update_firmware(void)
 {
@@ -157,7 +172,10 @@ int bl_update_firmware(void)
     uint32_t rce_size;
     
     uint8_t fw_buffer[STORAGE_PAGE_SIZE];
-    uint32_t fw_size;
+    packet_attribute_str packet_att = 
+    {
+        .p_buffer = fw_buffer,
+    };
     
     int ret = -1;
     
@@ -185,30 +203,37 @@ int bl_update_firmware(void)
         ret = com_read_data(&com_adapter, buffer, &rce_size);
         if(ret == 0) 
         {
-            ret = protocol_fw_packet_analysis(&protocol_adapter, buffer, rce_size, fw_buffer, &fw_size);
+            ret = protocol_packet_analysis(&protocol_adapter, buffer, rce_size, &packet_att);
             if(ret == 0)
             {
-                //write fw to storage
-
                 //earse
-                ret = storage_earse_data(&storage_adapter, addr_write_to, fw_size);
+                ret = storage_earse_data(&storage_adapter, addr_write_to, packet_att.size);
                 if(ret < 0)
                 {
                 }
                 
                 //write
-                ret = storage_write_8bit_data(&storage_adapter, addr_write_to, fw_buffer, fw_size);
+                ret = storage_write_8bit_data(&storage_adapter, addr_write_to, packet_att.p_buffer, packet_att.size);
                 if(ret < 0)
                 {
                 }
                 
-                addr_write_to += fw_size;
+                addr_write_to += packet_att.size;
+                
+                //packet ack
+                fw_packet_ack(true);
+                
+                //last packet
+                if(packet_att.type == LAST_FW_PACKET_TYPE)
+                {
+                    
+                }
             }
         }
-        else
+        else    //rce err
         {
-            //rce err
-            //todo
+            //packet ack
+            fw_packet_ack(false);
         }
     }
 }
