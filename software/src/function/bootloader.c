@@ -51,7 +51,7 @@ int bl_init_check(void)
         }
 #endif
         //jump to exe area
-        mcu_do_boot(&mcu_adapter, (void *)ADDR_EXE_AREA_FW);
+        mcu_do_boot(&mcu_adapter, (void *)ADDR_APP_AREA_FW);
     }
     else if(bl_state == BL_UPDATING)
     {
@@ -93,9 +93,9 @@ int bl_copy_firmware(void)
     uint32_t copy_size = ADDR_EXE_AREA_HEADER_SIZE + ADDR_EXE_AREA_FW_SIZE;
 #else
     uint32_t addr_copy_form = ADDR_BACKUP_AREA_FW;
-    uint32_t addr_copy_to = ADDR_EXE_AREA_FW;
+    uint32_t addr_copy_to = ADDR_APP_AREA_FW;
     
-    uint32_t copy_size = ADDR_EXE_AREA_FW_SIZE;
+    uint32_t copy_size = ADDR_APP_AREA_FW_SIZE;
 #endif
     
     uint32_t page_num = (copy_size + STORAGE_PAGE_SIZE - 1) / STORAGE_PAGE_SIZE;
@@ -239,18 +239,205 @@ int bl_update_firmware(void)
 }
 
 
+bootloader_manager_str bl_manager;
+
+void bl_enter_app_flow(void)
+{
+#if (CONFIG_FW_VERIFY_ENABLE == 1)
+    bl_manager.enter_app_flow_node = ENTER_APP__VERIFY;
+#else
+    bl_manager.enter_app_flow_node = ENTER_APP__JUMP_APP;
+#endif
+    
+    while(1)
+    {
+        switch(bl_manager.enter_app_flow_node)
+        {
+#if (CONFIG_FW_VERIFY_ENABLE == 1)
+            case ENTER_APP__VERIFY:
+                if(fw_verify() == 0)
+                {
+                    bl_manager.enter_app_flow_node = ENTER_APP__VERIFY_OK;
+                }
+                else
+                {
+                    bl_manager.enter_app_flow_node = ENTER_APP__VERIFY_FAIL;
+                }
+                break;
+            
+            case ENTER_APP__VERIFY_OK:
+                bl_manager.enter_app_flow_node = ENTER_APP__JUMP_APP;
+                break;
+            
+            case ENTER_APP__VERIFY_FAIL:
+                bl_manager.enter_app_flow_node = ENTER_APP__RESET;
+                break;
+#endif
+            case ENTER_APP__JUMP_APP:
+                mcu_do_boot(&mcu_adapter, (void *)ADDR_APP_AREA_FW);
+                break;
+            
+            case ENTER_APP__RESET:
+                mcu_reset(&mcu_adapter);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void bl_copy_flow(void)
+{
+    int ret = -1;
+    
+    uint8_t buffer[STORAGE_PAGE_SIZE];
+    
+#if (FW_HEADER_ENABLE == 1)
+    uint32_t addr_copy_form = ADDR_BACKUP_AREA_HEADER;
+    uint32_t addr_copy_to = ADDR_EXE_AREA_HEADER;
+    
+    uint32_t copy_size = ADDR_EXE_AREA_HEADER_SIZE + ADDR_EXE_AREA_FW_SIZE;
+    
+    bl_manager.copy_flow_node = COPY_FLOW__COPY_HEADER;
+#else
+    uint32_t addr_copy_form = ADDR_BACKUP_AREA_FW;
+    uint32_t addr_copy_to = ADDR_APP_AREA_FW;
+    
+    uint32_t copy_size = ADDR_APP_AREA_FW_SIZE;
+    
+    bl_manager.copy_flow_node = COPY_FLOW__COPY_FW;
+#endif
+    
+    uint32_t page_num = (copy_size + STORAGE_PAGE_SIZE - 1) / STORAGE_PAGE_SIZE;
+    
+    while(1)
+    {
+        switch(bl_manager.copy_flow_node)
+        {
+#if (CONFIG_FW_HEADER_ENABLE == 1)
+            case COPY_FLOW__COPY_HEADER:
+                break;
+            case COPY_FLOW__COPY_HEADER_OK:
+                break;
+            case COPY_FLOW__COPY_HEADER_FAIL:
+                break;
+#endif
+            case COPY_FLOW__COPY_FW:
+                break;
+            case COPY_FLOW__COPY_FW_OK:
+                break;
+            case COPY_FLOW__COPY_FW_FAIL:
+                break;
+#if (CONFIG_FW_VERIFY_ENABLE == 1)
+            case COPY_FLOW__VERIFY:
+                break;
+            case COPY_FLOW__VERIFY_OK:
+                break;
+            case COPY_FLOW__VERIFY_FAIL:
+                break;
+#endif
+            case COPY_FLOW__RESET:
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void bl_update_flow(void)
+{
+    uint8_t buffer[STORAGE_PAGE_SIZE];
+    uint32_t rce_size;
+    
+    uint8_t fw_buffer[STORAGE_PAGE_SIZE];
+    packet_attribute_str packet_att = 
+    {
+        .p_buffer = fw_buffer,
+    };
+    
+    int ret = -1;
+    
+#if (CONFIG_FW_BACKUP_AREA_ENABLE == 1)
+    #if (CONFIG_FW_HEADER_ENABLE == 1)
+        uint32_t addr_write_to = ADDR_BACKUP_AREA_HEADER;
+        uint32_t max_write_size = ADDR_BACKUP_AREA_HEADER_SIZE + ADDR_BACKUP_AREA_FW_SIZE;
+    
+        bl_manager.update_flow_node = UPDATE_FLOW__REC_HEADER;
+    #else
+        uint32_t addr_write_to = ADDR_BACKUP_AREA_FW;
+        uint32_t max_write_size = ADDR_BACKUP_AREA_FW_SIZE;
+    
+        bl_manager.update_flow_node = UPDATE_FLOW__REC_FW;
+    #endif
+#else
+    #if (CONFIG_FW_HEADER_ENABLE == 1)
+        uint32_t addr_write_to = ADDR_EXE_AREA_HEADER;
+        uint32_t max_write_size = ADDR_EXE_AREA_HEADER_SIZE + ADDR_EXE_AREA_FW_SIZE;
+    
+        bl_manager.update_flow_node = UPDATE_FLOW__REC_HEADER;
+    #else
+        uint32_t addr_write_to = ADDR_EXE_AREA_FW;
+        uint32_t max_write_size = ADDR_EXE_AREA_FW_SIZE;
+        
+        bl_manager.update_flow_node = UPDATE_FLOW__REC_FW;
+    #endif
+#endif
+    
+    while(1)
+    {
+        switch(bl_manager.update_flow_node)
+        {
+#if (CONFIG_FW_HEADER_ENABLE == 1)
+            case UPDATE_FLOW__REC_HEADER:
+                break;
+            case UPDATE_FLOW__RCE_HEADER_OK:
+                break;
+            case UPDATE_FLOW__RCE_HEADER_FAIL:
+                break;
+#endif
+            case UPDATE_FLOW__REC_FW:
+                break;
+            case UPDATE_FLOW__RCE_FW_OK:
+                break;
+            case UPDATE_FLOW__RCE_FW_FAIL:
+                break;
+#if (CONFIG_FW_VERIFY_ENABLE == 1)
+            case UPDATE_FLOW__VERIFY:
+                break;
+            case UPDATE_FLOW__VERIFY_OK:
+                break;
+            case UPDATE_FLOW__VERIFY_FAIL:
+                break;
+#endif
+            case UPDATE_FLOW__RESET:
+                break;
+            default:
+                break;
+        }
+    }
+}
 
 void bl_main(void)
 {
-    int ret = bl_init_check();
-    if(ret < 0)
-    {
-        //reset mcu
-        mcu_reset(&mcu_adapter);
-    }
+    uint32_t bl_state = -1;
     
-    if(ret == 1)    
+    bl_get_state((uint8_t *)bl_state);
+    
+    switch(bl_state)
     {
-        bl_update_firmware();
+        case BL_ENTER_APP:
+            bl_enter_app_flow();
+            break;
+        case BL_COPYING:
+            bl_copy_flow();
+            break;
+        case BL_UPDATING:
+            bl_update_flow();
+            break;
+        default:
+            break;
     }
 }
+
+
+
