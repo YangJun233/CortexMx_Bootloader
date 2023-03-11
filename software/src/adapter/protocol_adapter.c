@@ -28,6 +28,19 @@ int protocol_packet_analysis(protocol_adapter_str * p_adapter, uint8_t * p_in, u
   * @param  size: ack packet size.
   * @retval
   */
+void protocol_verify_firmware(protocol_adapter_str * p_adapter, uint8_t * p, uint32_t * size)
+{
+    
+}
+
+
+/**
+  * @brief  build firmware ack package.
+  * @param  ack: true:rce and process fw packet ok, false:rce and process fw packet fail.
+  * @param  p: ack packet data.
+  * @param  size: ack packet size.
+  * @retval
+  */
 void protocol_build_ack_packet(protocol_adapter_str * p_adapter, bool ack, uint8_t * p, uint32_t * size)
 {
     if(!p_adapter)

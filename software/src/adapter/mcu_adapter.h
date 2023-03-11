@@ -6,10 +6,10 @@
 typedef struct
 {
     void (*p_reset)(void);
-    void (*p_do_boot)(void * p_addr);
+    int (*p_do_boot)(uint32_t addr);
 }mcu_adapter_str;
 
 void mcu_reset(mcu_adapter_str * p_adapter);
-void mcu_do_boot(mcu_adapter_str * p_adapter, void * addr);
+int mcu_do_boot(mcu_adapter_str * p_adapter, uint32_t addr);
 
 #endif

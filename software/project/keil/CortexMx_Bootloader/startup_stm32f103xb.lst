@@ -467,7 +467,7 @@ artup_stm32f103xb.o -I.\RTE\_CortexMx_Bootloader -ID:\A\MDK\Packs\ARM\CMSIS\5.9
 .0\CMSIS\Core\Include -ID:\A\MDK\Packs\Keil\STM32F1xx_DFP\2.4.0\Device\Include 
 --predefine="__MICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 537" --pred
 efine="_RTE_ SETA 1" --predefine="STM32F10X_MD SETA 1" --predefine="_RTE_ SETA 
-1" --list=startup_stm32f103xb.lst startup_stm32f103xb.s
+1" --list=..\startup_stm32f103xb.lst startup_stm32f103xb.s
 
 
 

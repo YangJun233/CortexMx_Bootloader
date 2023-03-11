@@ -32,3 +32,4 @@ int com_write_data(com_adapter_str * p_adapter, uint8_t * p, uint32_t size)
     
     return p_adapter->p_write_data(p, size);
 }
+

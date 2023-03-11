@@ -20,14 +20,15 @@ void mcu_reset(mcu_adapter_str * p_adapter)
   * @brief  mcu soft reset.
   * @param  p_adapter: mcu adapter.
   * @param  addr: boot address.
-  * @retval
+  * @retval int: status,-1: failed
   */
-void mcu_do_boot(mcu_adapter_str * p_adapter, void * addr)
+int mcu_do_boot(mcu_adapter_str * p_adapter, uint32_t addr)
 {
     if(!p_adapter)
     {
-        return;
+        return -1;
     }
     
-    p_adapter->p_do_boot((void *)addr);
+    return p_adapter->p_do_boot(addr);
 }
+

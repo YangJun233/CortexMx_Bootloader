@@ -11,7 +11,7 @@ typedef struct
     uint32_t    size;       //packet size
 }packet_attribute_str;
 
-enum
+typedef enum
 {
     FW_PACKET_TYPE = 0x01,
     LAST_FW_PACKET_TYPE = 0x02,

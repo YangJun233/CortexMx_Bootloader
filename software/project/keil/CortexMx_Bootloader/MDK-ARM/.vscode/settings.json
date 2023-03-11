@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "bootloader.h": "c",
+        "port.h": "c",
+        "storage_adapter.h": "c",
+        "user_adapter.h": "c",
+        "mcu_adapter.h": "c",
+        "protocol_adapter.h": "c"
+    }
+}
